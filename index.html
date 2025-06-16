@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JD Projects</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f3f4f6; /* Light gray background */
+            padding: 2rem; /* Add some padding for smaller screens */
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 2.5rem;
+            border-radius: 1rem; /* More rounded corners */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            max-width: 900px; /* Wider container for projects */
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem; /* Rounded button corners */
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-primary {
+            background-color: #4f46e5; /* Indigo-600 */
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca; /* Indigo-700 */
+            transform: translateY(-1px);
+        }
+        .message-box {
+            background-color: #e0f2f7; /* Light blue for info */
+            border: 1px solid #a7d9f0;
+            color: #0c4a6e;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            text-align: left;
+            word-wrap: break-word; /* Ensure long messages break */
+            max-height: 150px; /* Limit height */
+            overflow-y: auto; /* Scroll for overflow */
+        }
+        .message-box.error {
+            background-color: #fee2e2; /* Light red for error */
+            border-color: #ef4444;
+            color: #991b1b;
+        }
+        .status-text {
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 500; /* font-medium */
+            color: #374151; /* Gray-700 */
+        }
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsive grid */
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .project-card {
+            background-color: #f9fafb; /* Lighter background for cards */
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+            text-align: center;
+        }
+        .project-card h3 {
+            font-size: 1.5rem; /* text-xl */
+            font-weight: 700; /* font-bold */
+            color: #1f2937; /* Gray-800 */
+        }
+        .project-card p {
+            font-size: 0.95rem;
+            color: #4b5563; /* Gray-600 */
+        }
+        .project-card .price {
+            font-size: 1.25rem; /* text-lg */
+            font-weight: 600;
+            color: #10b981; /* Green-500 */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-2">JD Projects</h1>
+        <p class="text-lg text-gray-600 mb-6">Contact: <a href="https://www.linkedin.com/in/jeyadharshini-s-8024b0292/" target="_blank" class="text-indigo-600 hover:underline">Connect on LinkedIn</a></p>
+
+        <!-- Connection Section -->
+        <div class="flex flex-col gap-4 items-center mb-6 border-b pb-6 border-gray-200">
+            <button id="connectButton" class="btn btn-primary">
+                Connect Wallet
+            </button>
+            <p id="accountDisplay" class="status-text hidden">Connected Account: <span class="font-mono text-gray-600 break-all"></span></p>
+            <p id="chainDisplay" class="status-text hidden">Chain ID: <span class="font-mono text-gray-600"></span></p>
+        </div>
+
+        <!-- Projects Section -->
+        <h2 class="text-3xl font-bold text-gray-800 mb-6">Our Project Models</h2>
+        <div id="projectsContainer" class="project-grid">
+            <!-- Project cards will be injected here by JavaScript -->
+        </div>
+
+        <!-- Message/Status Display -->
+        <div id="messageBox" class="message-box hidden">
+            <p id="messageText"></p>
+        </div>
+    </div>
+
+    <script>
+        // Get references to message box elements early to avoid ReferenceError
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+
+        // Function to display messages to the user
+        function displayMessage(message, type = 'info') {
+            console.log(`[displayMessage - ${type.toUpperCase()}]: ${message}`); // Log all messages
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden', 'error');
+            if (type === 'error') {
+                messageBox.classList.add('error');
+            } else {
+                messageBox.classList.remove('error');
+            }
+            // Clear message after a few seconds unless it's an error
+            if (type === 'info') {
+                setTimeout(() => {
+                    messageBox.classList.add('hidden');
+                    messageBox.classList.remove('error'); // Ensure error class is removed on clear
+                }, 5000);
+            }
+        }
+
+        console.log("[Script Load] Starting script execution.");
+
+        // Check if MetaMask is installed and accessible
+        if (typeof window.ethereum === 'undefined') {
+            console.log("[Script Load] MetaMask provider NOT detected (window.ethereum is undefined).");
+            displayMessage('MetaMask is not installed. Please install it to use this Dapp.', 'error');
+            // Disable the connect button as MetaMask is not present
+            const connectButton = document.getElementById('connectButton');
+            if (connectButton) {
+                connectButton.disabled = true;
+                console.log("[Script Load] Connect button disabled.");
+            }
+        } else {
+            console.log("[Script Load] MetaMask provider detected (window.ethereum is defined).");
+        }
+
+        // Get other DOM element references after messageBox and messageText
+        const connectButton = document.getElementById('connectButton');
+        const accountDisplay = document.getElementById('accountDisplay');
+        const chainDisplay = document.getElementById('chainDisplay');
+        const projectsContainer = document.getElementById('projectsContainer');
+        
+        let accounts = []; // Stores the connected Ethereum accounts
+        let currentChainId = null; // Stores the current chain ID
+
+        // Define project models with their details
+        const projects = [
+            {
+                id: 'website-design',
+                name: 'Website Design Package',
+                description: 'Custom website design including responsive layout and basic SEO. Estimated 2 weeks completion.',
+                priceEth: '0.01', // Example price in ETH
+                recipient: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8' // A placeholder recipient address
+            },
+            {
+                id: 'mobile-app-basic',
+                name: 'Mobile App Development (Basic)',
+                description: 'Development of a simple mobile application for iOS/Android platforms. Estimated 1 month completion.',
+                priceEth: '0.05',
+                recipient: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
+            },
+            {
+                id: 'blockchain-consulting',
+                name: 'Blockchain Consulting Session',
+                description: 'A focused 1-hour consultation on blockchain integration and strategy for your business.',
+                priceEth: '0.005',
+                recipient: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
+            },
+            {
+                id: 'custom-software',
+                name: 'Custom Software Development',
+                description: 'Tailored software solution built to your specific requirements. Price negotiable.',
+                priceEth: '0.1', // Example initial payment
+                recipient: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
+            }
+        ];
+
+        // Function to update the displayed account
+        function updateAccountDisplay(currentAccounts) {
+            if (currentAccounts.length > 0) {
+                accounts = currentAccounts;
+                accountDisplay.querySelector('span').textContent = accounts[0];
+                accountDisplay.classList.remove('hidden');
+                displayMessage(`Connected with account: ${accounts[0]}`);
+                console.log(`[Account Update] Connected account: ${accounts[0]}`);
+            } else {
+                accounts = [];
+                accountDisplay.querySelector('span').textContent = '';
+                accountDisplay.classList.add('hidden');
+                displayMessage('No accounts connected. Please connect your wallet to order a project.', 'error');
+                console.log("[Account Update] No accounts connected.");
+            }
+        }
+
+        // Function to update the displayed chain ID
+        function updateChainIdDisplay(chainId) {
+            currentChainId = chainId;
+            chainDisplay.querySelector('span').textContent = parseInt(chainId, 16); // Convert hex to decimal
+            chainDisplay.classList.remove('hidden');
+            displayMessage(`Current Chain ID: ${parseInt(chainId, 16)}`);
+            console.log(`[Chain Update] Current Chain ID: ${parseInt(chainId, 16)}`);
+        }
+
+        // Function to handle sending an Ethereum transaction
+        async function sendEthTransaction(recipientAddress, amountEth) {
+            if (accounts.length === 0) {
+                displayMessage('Please connect your wallet first to send a transaction.', 'error');
+                return;
+            }
+
+            if (!recipientAddress || !amountEth || parseFloat(amountEth) <= 0) {
+                displayMessage('Invalid transaction details. Please check recipient address and amount.', 'error');
+                return;
+            }
+            
+            // Ensure window.ethereum is available before requesting
+            if (!window.ethereum) {
+                displayMessage('MetaMask is not available. Please install it or open Dapp in a MetaMask-enabled browser.', 'error');
+                console.error("[sendEthTransaction] window.ethereum is not available.");
+                return;
+            }
+
+            // Convert ETH to Wei (1 ETH = 10^18 Wei)
+            // Using BigInt for accurate conversion to avoid floating point issues
+            const amountWei = BigInt(Math.floor(parseFloat(amountEth) * (10**18))).toString(16); // Convert to hex string
+
+            try {
+                displayMessage('Awaiting transaction confirmation in MetaMask...');
+                console.log("[sendEthTransaction] Attempting to send transaction...");
+                console.log("[sendEthTransaction] Transaction parameters:", { from: accounts[0], to: recipientAddress, value: '0x' + amountWei, chainId: currentChainId });
+
+                const transactionParameters = {
+                    from: accounts[0], // Sender address (current connected account)
+                    to: recipientAddress, // Recipient address
+                    value: '0x' + amountWei, // Amount to send in Wei (hexadecimal)
+                    gasPrice: '0x09184e72a000', // Example gas price (10 Gwei) - MetaMask often suggests
+                    gas: '0x5208', // Example gas limit (21000 for a simple transfer)
+                    data: '0x', // Optional: for smart contract interactions, leave as '0x' for simple ETH transfer
+                    chainId: currentChainId, // Current chain ID from MetaMask
+                };
+
+                const txHash = await window.ethereum.request({
+                    method: 'eth_sendTransaction',
+                    params: [transactionParameters],
+                });
+
+                displayMessage(`Transaction sent! Hash: ${txHash}. You can view it on a block explorer.`);
+                console.log("[sendEthTransaction] Transaction Hash:", txHash);
+
+            } catch (error) {
+                if (error.code === 4001) { // User rejected transaction
+                    displayMessage('Transaction rejected by the user.', 'error');
+                    console.warn("[sendEthTransaction] User rejected transaction:", error.message);
+                } else {
+                    displayMessage(`Error sending transaction: ${error.message}`, 'error');
+                    console.error("[sendEthTransaction] Error sending transaction:", error);
+                }
+            }
+        }
+
+        // Event listener for connect button
+        if (connectButton) { // Ensure connectButton exists before adding listener
+            connectButton.addEventListener('click', async () => {
+                console.log("[Connect Button Click] Button clicked.");
+                // Ensure window.ethereum is available before requesting accounts
+                if (!window.ethereum) {
+                    displayMessage('MetaMask is not available. Please install it or open Dapp in a MetaMask-enabled browser.', 'error');
+                    console.error("[Connect Button Click] window.ethereum is not available.");
+                    return;
+                }
+                console.log("[Connect Button Click] window.ethereum is available. Attempting to request accounts...");
+                try {
+                    // Request accounts from MetaMask
+                    const fetchedAccounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    updateAccountDisplay(fetchedAccounts);
+                    console.log("[Connect Button Click] Accounts fetched successfully.");
+
+                    // Get and display the current chain ID
+                    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                    updateChainIdDisplay(chainId);
+                    console.log("[Connect Button Click] Chain ID fetched successfully.");
+
+                } catch (error) {
+                    if (error.code === 4001) { // User rejected request
+                        displayMessage('Wallet connection rejected by the user.', 'error');
+                        console.warn("[Connect Button Click] Wallet connection rejected by user:", error.message);
+                    } else {
+                        displayMessage(`Error connecting wallet: ${error.message}`, 'error');
+                        console.error("[Connect Button Click] Error connecting wallet:", error);
+                    }
+                }
+            });
+        } else {
+            console.error("[Script Load] Connect button element not found!");
+        }
+
+
+        // Event listeners for MetaMask account and chain changes
+        // Only attach if window.ethereum is available (checked once at the top)
+        if (window.ethereum) {
+            console.log("[Script Load] Attaching MetaMask event listeners.");
+            window.ethereum.on('accountsChanged', (newAccounts) => {
+                console.log("[MetaMask Event] accountsChanged event received:", newAccounts);
+                updateAccountDisplay(newAccounts);
+                // Re-fetch chain ID after account change if needed, though usually chain doesn't change with accounts
+                if (window.ethereum) { // Defensive check
+                    window.ethereum.request({ method: 'eth_chainId' }).then(updateChainIdDisplay);
+                }
+            });
+
+            window.ethereum.on('chainChanged', (newChainId) => {
+                console.log("[MetaMask Event] chainChanged event received:", newChainId);
+                updateChainIdDisplay(newChainId);
+                displayMessage(`MetaMask network changed to Chain ID: ${parseInt(newChainId, 16)}`, 'info');
+            });
+        } else {
+            console.log("[Script Load] Skipping MetaMask event listener attachment as window.ethereum is not available.");
+        }
+
+
+        // Function to render project cards
+        function renderProjects() {
+            console.log("[renderProjects] Rendering project cards.");
+            projectsContainer.innerHTML = ''; // Clear existing projects
+            projects.forEach(project => {
+                const projectCard = document.createElement('div');
+                projectCard.className = 'project-card';
+                projectCard.innerHTML = `
+                    <h3>${project.name}</h3>
+                    <p>${project.description}</p>
+                    <p class="price">Price: ${project.priceEth} ETH</p>
+                    <button class="btn btn-primary order-btn"
+                            data-recipient-address="${project.recipient}"
+                            data-price-eth="${project.priceEth}">
+                        Order Now
+                    </button>
+                `;
+                projectsContainer.appendChild(projectCard);
+            });
+
+            // Add event listeners to the new "Order Now" buttons
+            document.querySelectorAll('.order-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    console.log(`[Order Button Click] Order button for ${event.target.dataset.id} clicked.`);
+                    const recipient = event.target.dataset.recipientAddress;
+                    const price = event.target.dataset.priceEth;
+                    sendEthTransaction(recipient, price);
+                });
+            });
+        }
+
+        // Initial check for accounts and chain on page load, and render projects
+        async function initialSetup() {
+            console.log("[Initial Setup] Running initial setup.");
+            if (window.ethereum) { // Only proceed if MetaMask provider is available
+                console.log("[Initial Setup] window.ethereum is available. Attempting silent account/chain fetch.");
+                try {
+                    // Try to get accounts silently if already connected
+                    const fetchedAccounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    updateAccountDisplay(fetchedAccounts);
+
+                    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                    updateChainIdDisplay(chainId);
+
+                } catch (error) {
+                    console.error("[Initial Setup] Error during silent account/chain fetch:", error);
+                    // Only display error if it's not due to user rejection (e.g., 4001) for initial check
+                    if (error.code !== 4001) {
+                         displayMessage("Could not retrieve initial MetaMask state. Please connect your wallet.", "error");
+                    }
+                }
+            } else {
+                console.log("[Initial Setup] window.ethereum is NOT available. Displaying MetaMask installation message.");
+                displayMessage("MetaMask is not available. Please install it to use this Dapp.", "error");
+            }
+            renderProjects(); // Render projects on load
+            console.log("[Initial Setup] Initial setup complete. Projects rendered.");
+        }
+
+        window.onload = initialSetup; // Call initial setup and render projects on window load
+        console.log("[Script Load] Script loaded. window.onload will trigger initial setup.");
+    </script>
+</body>
+</html>
